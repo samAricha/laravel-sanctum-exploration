@@ -15,8 +15,8 @@ class AuthController extends Controller
     use HttpResponses;
     public function register(StoreUserRequest $request)
     {
-//        $request->validated($request->only(['name', 'email', 'password']));
-        $request->validated($request->all());
+        $request->validated($request->only(['name', 'email', 'password']));
+//        $request->validated($request->all());
 
 
         $user = User::create([
@@ -29,20 +29,6 @@ class AuthController extends Controller
             'user' => $user,
             'token' => $user->createToken('API Token')->plainTextToken
         ]);
-
-
-
-
-//        return $this->success([
-//            'user' => $user,
-//            'token' => $user->createToken('auth_token')->plainTextToken
-//        ]);
-
-//        $token = $user->createToken('auth_token')->plainTextToken;
-//        return response()->json([
-//            'access_token' => $token,
-//            'token_type' => 'Bearer',
-//        ]);
     }
 
 
