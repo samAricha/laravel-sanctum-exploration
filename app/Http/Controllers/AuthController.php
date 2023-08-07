@@ -2,51 +2,61 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LoginUserRequest;
+use App\Http\Requests\StoreUserRequest;
 use App\Models\User;
+use App\Traits\HttpResponses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    use HttpResponses;
+    public function register(StoreUserRequest $request)
     {
-        $validatedData = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-        ]);
+//        $request->validated($request->only(['name', 'email', 'password']));
+        $request->validated($request->all());
+
 
         $user = User::create([
-            'name' => $validatedData['name'],
-            'email' => $validatedData['email'],
-            'password' => Hash::make($validatedData['password']),
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
         ]);
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
+        return $this->success([
+            'user' => $user,
+            'token' => $user->createToken('API Token')->plainTextToken
         ]);
+
+
+
+
+//        return $this->success([
+//            'user' => $user,
+//            'token' => $user->createToken('auth_token')->plainTextToken
+//        ]);
+
+//        $token = $user->createToken('auth_token')->plainTextToken;
+//        return response()->json([
+//            'access_token' => $token,
+//            'token_type' => 'Bearer',
+//        ]);
     }
 
 
-    public function login(Request $request)
+    public function login(LoginUserRequest $request)
     {
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json([
-                'message' => 'Invalid login details'
-            ], 401);
+        $request->validated($request->only(['email', 'password']));
+        if(!Auth::attempt($request->only(['email', 'password']))) {
+            return $this->error('', 'Credentials do not match', 401);
         }
 
-        $user = User::where('email', $request['email'])->firstOrFail();
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'Bearer',
+        $user = User::where('email', $request->email)->first();
+        return $this->success([
+            'user' => $user,
+            'token' => $user->createToken('API Token')->plainTextToken
         ]);
     }
 
